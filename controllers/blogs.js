@@ -1,7 +1,5 @@
 const blogsRouter = require('express').Router();
 const Blog = require('../models/blog');
-const User = require('../models/user');
-const jwt = require('jsonwebtoken');
 const middleware = require('../utils/middleware');
 require('express-async-errors');
 
@@ -13,6 +11,11 @@ blogsRouter.get('/', async (request, response) => {
 
 blogsRouter.post('/', middleware.userExtractor, async (request, response) => {
   const user = request.user;
+  if (!request.body.url || !request.body.title) {
+    return response.status(400).json({
+      error: 'required information is missing'
+    });
+  }
   console.log('user extracted from token:', user);
   const blog = new Blog({
     title: request.body.title,

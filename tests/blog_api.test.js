@@ -3,12 +3,16 @@ const supertest = require('supertest');
 const app = require('../app');
 const helper = require('./test_helper');
 const Blog = require('../models/blog');
+const User = require('../models/user');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 require('express-async-errors');
 
 const api = supertest(app);
 
 beforeEach(async () => {
   await Blog.deleteMany({});
+  await User.deleteMany({});
   console.log('cleared the database');
   const blogsArray = helper.initialBlogs.map(blog => new Blog(blog));
   const promiseArray = blogsArray.map(blog => blog.save());
@@ -36,14 +40,30 @@ describe('get all blogs', () => {
 
 describe('add a blog', () => {
   test('succeeds when a blog can be added', async () => {
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash('password', salt);
+    const newUser = new User({
+      username: 'onetimeuser',
+      name: 'onetimeuser',
+      passwordHash
+    });
+    const savedUser = await newUser.save();
+    const userForToken = {
+      username: savedUser.username,
+      name: savedUser.name,
+      id: savedUser._id
+    };
+    const token = jwt.sign(userForToken, process.env.SECRET);
     const newBlog = {
       'title': 'Spice and More Spice Makes Everything Nice',
       'author': 'Ashley Benhayoun',
       'url': 'https://www.hyperflyer.com/explore-sf/spice-and-more-spice-makes-everything-nice/',
-      'likes': 0
+      'likes': 0,
+      'user': savedUser._id
     };
     await api
       .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
       .send(newBlog)
       .expect(201);
     const blogs = await helper.blogsInDb();
@@ -53,13 +73,29 @@ describe('add a blog', () => {
   }, helper.timeOut);
 
   test('succeeds when likes is default to 0 if it is not sent from the request', async () => {
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash('password', salt);
+    const newUser = new User({
+      username: 'onetimeuser',
+      name: 'onetimeuser',
+      passwordHash
+    });
+    const savedUser = await newUser.save();
+    const userForToken = {
+      username: savedUser.username,
+      name: savedUser.name,
+      id: savedUser._id
+    };
+    const token = jwt.sign(userForToken, process.env.SECRET);
     const newBlog = {
       'title': 'Spice and More Spice Makes Everything Nice',
       'author': 'Ashley Benhayoun',
-      'url': 'https://www.hyperflyer.com/explore-sf/spice-and-more-spice-makes-everything-nice/'
+      'url': 'https://www.hyperflyer.com/explore-sf/spice-and-more-spice-makes-everything-nice/',
+      'user': savedUser._id
     };
     const savedBlog = await api
       .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
       .send(newBlog)
       .expect(201);
     const blogs = await helper.blogsInDb();
@@ -69,12 +105,28 @@ describe('add a blog', () => {
   }, helper.timeOut);
 
   test('fails with bad request if title or url is missing', async () => {
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash('password', salt);
+    const newUser = new User({
+      username: 'onetimeuser',
+      name: 'onetimeuser',
+      passwordHash
+    });
+    const savedUser = await newUser.save();
+    const userForToken = {
+      username: savedUser.username,
+      name: savedUser.name,
+      id: savedUser._id
+    };
+    const token = jwt.sign(userForToken, process.env.SECRET);
     const newBlog1 = {
       'author': 'Ashley Benhayoun',
-      'url': 'https://www.hyperflyer.com/explore-sf/spice-and-more-spice-makes-everything-nice/'
+      'url': 'https://www.hyperflyer.com/explore-sf/spice-and-more-spice-makes-everything-nice/',
+      'user': savedUser._id
     };
     await api
       .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
       .send(newBlog1)
       .expect(400);
     let blogs = await helper.blogsInDb();
@@ -82,14 +134,40 @@ describe('add a blog', () => {
 
     const newBlog2 = {
       'title': 'Spice and More Spice Makes Everything Nice',
-      'author': 'Ashley Benhayoun'
+      'author': 'Ashley Benhayoun',
+      'user': savedUser._id
     };
     await api
       .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
       .send(newBlog2)
       .expect(400);
     blogs = await helper.blogsInDb();
     expect(blogs).toHaveLength(helper.initialBlogs.length);
+  }, helper.timeOut);
+
+  test('fails with unauthorized if token is not provided', async () => {
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash('password', salt);
+    const newUser = new User({
+      username: 'onetimeuser',
+      name: 'onetimeuser',
+      passwordHash
+    });
+    const savedUser = await newUser.save();
+    const newBlog = {
+      'title': 'test token',
+      'author': 'Ashley Benhayoun',
+      'url': 'https://www.hyperflyer.com/explore-sf/spice-and-more-spice-makes-everything-nice/',
+      'user': savedUser._id
+    };
+    const result = await api
+      .post('/api/blogs')
+      .send(newBlog)
+      .expect(401);
+    let blogs = await helper.blogsInDb();
+    expect(blogs).toHaveLength(helper.initialBlogs.length);
+    expect(result.body.error).toContain('token missing');
   }, helper.timeOut);
 });
 
