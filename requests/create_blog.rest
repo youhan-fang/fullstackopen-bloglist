@@ -1,5 +1,6 @@
 POST http://localhost:3003/api/blogs
 Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3R0b2tlbiIsImlkIjoiNjE0YTU0NzJmNTAzYTFmOTVjYTg3ODEwIiwiaWF0IjoxNjMyMjYyMTU2fQ.bf-sRIrNqsWwX342o-QJZujW-PPCshjz-vgu5K2zOab
 
 {
   "title": "Spice and More Spice Makes Everything Nice",
