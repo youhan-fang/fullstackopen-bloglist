@@ -1,7 +1,7 @@
 {
   "name": "bloglist",
   "version": "1.0.0",
-  "description": "fullstackopen exercise 4 - bloglist",
+  "description": "fullstackopen - bloglist",
   "main": "index.js",
   "scripts": {
     "start": "NODE_ENV=production node index.js",
@@ -13,21 +13,23 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/youhan-fang/fullstackopen-part4.git"
+    "url": "git+https://github.com/youhan-fang/fullstackopen-bloglist.git"
   },
   "author": "Youhan Fang",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/youhan-fang/fullstackopen-part4/issues"
+    "url": "https://github.com/youhan-fang/fullstackopen-bloglist/issues"
   },
-  "homepage": "https://github.com/youhan-fang/fullstackopen-part4#readme",
+  "homepage": "https://github.com/youhan-fang/fullstackopen-bloglist#readme",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
     "express-async-errors": "^3.1.1",
     "lodash": "^4.17.21",
-    "mongoose": "^6.0.6",
+    "mongoose": "^6.0.7",
+    "mongoose-unique-validator": "^2.0.3",
     "morgan": "^1.10.0"
   },
   "devDependencies": {
