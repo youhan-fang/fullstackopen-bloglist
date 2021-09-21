@@ -1,0 +1,6 @@
+PUT http://localhost:3003/api/blogs/6142cf09b6315bb4c0e02398
+Content-Type: application/json
+
+{
+  "title": "updated blog title"
+}
