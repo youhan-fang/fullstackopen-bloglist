@@ -2,6 +2,7 @@ const blogsRouter = require('express').Router();
 const Blog = require('../models/blog');
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
+const middleware = require('../utils/middleware');
 require('express-async-errors');
 
 
@@ -10,20 +11,9 @@ blogsRouter.get('/', async (request, response) => {
   response.json(blogs);
 });
 
-blogsRouter.post('/', async (request, response) => {
-  const token = request.token;
-  const decodedToken = jwt.verify(token, process.env.SECRET);
-  if (!token || !decodedToken.id) {
-    return response.status(401).json({
-      error: 'token missing or invalid'
-    });
-  }
-  if (!request.body.title || !request.body.url) {
-    return response.status(400).json({
-      error: 'required information is missing'
-    });
-  }
-  const user = await User.findById(decodedToken.id);
+blogsRouter.post('/', middleware.userExtractor, async (request, response) => {
+  const user = request.user;
+  console.log('user extracted from token:', user);
   const blog = new Blog({
     title: request.body.title,
     author: request.body.author,
@@ -37,18 +27,8 @@ blogsRouter.post('/', async (request, response) => {
   response.status(201).json(savedBlog);
 });
 
-blogsRouter.delete('/:id', async (request, response) => {
-  if (!request.token) {
-    return response.status(401).json({
-      error: 'token missing'
-    });
-  }
-  const decodedToken = jwt.verify(request.token, process.env.SECRET);
-  if (!decodedToken || !decodedToken.id) {
-    return response.status(401).json({
-      error: 'token invalid'
-    });
-  }
+blogsRouter.delete('/:id', middleware.userExtractor, async (request, response) => {
+  const user = request.user;
   const id = request.params.id;
   const blog = await Blog.findById(id);
 
@@ -58,7 +38,7 @@ blogsRouter.delete('/:id', async (request, response) => {
     });
   }
 
-  if (blog.user.toString() !== decodedToken.id.toString()){
+  if (blog.user.toString() !== user._id.toString()){
     return response.status(401).json({
       error: 'the user does not have the permission to delete the blog'
     });
