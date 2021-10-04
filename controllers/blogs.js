@@ -51,9 +51,17 @@ blogsRouter.delete('/:id', middleware.userExtractor, async (request, response) =
   response.status(204).end();
 });
 
-blogsRouter.put('/:id', async (request, response) => {
+blogsRouter.put('/:id', middleware.userExtractor, async (request, response) => {
+  // const user = request.user;
   const id = request.params.id;
   const blog = request.body;
+
+  // if (blog.user.toString() !== user._id.toString()){
+  //   return response.status(401).json({
+  //     error: 'the user does not have the permission to update the blog'
+  //   });
+  // }
+
   const blogUpdated = await Blog.findByIdAndUpdate(id, blog, { new: true });
 
   if(blogUpdated){
